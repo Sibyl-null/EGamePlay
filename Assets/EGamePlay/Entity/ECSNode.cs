@@ -46,7 +46,7 @@ namespace EGamePlay
                     continue;
                 }
                 
-                if (item.Disable)
+                if (item.Enable == false)
                     continue;
                 
                 item.Update();
@@ -67,7 +67,7 @@ namespace EGamePlay
                     continue;
                 }
                 
-                if (item.Disable)
+                if (item.Enable == false)
                     continue;
                 
                 item.FixedUpdate();

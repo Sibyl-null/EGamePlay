@@ -1,12 +1,14 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using GameUtils;
 using ET;
 using System.Linq;
 
 namespace EGamePlay.Combat
 {
+    public class CombatEndEvent
+    {
+    }
+    
     /// <summary>
     /// 战局上下文
     /// 像回合制、moba这种战斗按局来分的，可以创建这个战局上下文，如果是mmo，那么战局上下文应该是在角色进入战斗才会创建，离开战斗就销毁
@@ -14,39 +16,33 @@ namespace EGamePlay.Combat
     public class CombatContext : Entity
     {
         public static CombatContext Instance { get; private set; }
-#if !SERVER
+        
         public Dictionary<GameObject, CombatEntity> Object2Entities { get; set; } = new Dictionary<GameObject, CombatEntity>();
         public Dictionary<GameObject, AbilityItem> Object2Items { get; set; } = new Dictionary<GameObject, AbilityItem>();
-#endif
-
-
+        
         public override void Awake()
         {
             base.Awake();
             Instance = this;
-            //AddComponent<CombatActionManageComponent>();
             AddComponent<UpdateComponent>();
             Subscribe<EntityDeadEvent>(OnEntityDead);
         }
 
-        #region 回合制战斗
-        //public GameTimer TurnRoundTimer { get; set; } = new GameTimer(2f);
-        public Dictionary<int, CombatEntity> HeroEntities { get; set; } = new Dictionary<int, CombatEntity>();
+
+        // ------------------------------------------------------------------
+        // 回合制战斗
+        // ------------------------------------------------------------------
+
+        public Dictionary<int, CombatEntity> HeroEntities { get; set; } = new();
         public Dictionary<int, CombatEntity> EnemyEntities { get; set; } = new Dictionary<int, CombatEntity>();
-        public List<RoundAction> RoundActions { get; set; } = new List<RoundAction>();
-
-
-        public override void Update()
-        {
-
-        }
+        public List<RoundAction> RoundActions { get; set; } = new();
 
         public CombatEntity AddHeroEntity(int seat)
         {
             var entity = AddChild<CombatEntity>();
             entity.IsHero = true;
-            HeroEntities.Add(seat, entity);
             entity.SeatNumber = seat;
+            HeroEntities.Add(seat, entity);
             return entity;
         }
 
@@ -54,8 +50,8 @@ namespace EGamePlay.Combat
         {
             var entity = AddChild<CombatEntity>();
             entity.IsHero = false;
-            EnemyEntities.Add(seat, entity);
             entity.SeatNumber = seat;
+            EnemyEntities.Add(seat, entity);
             return entity;
         }
 
@@ -74,15 +70,19 @@ namespace EGamePlay.Combat
             var deadEntity = evnt.DeadEntity;
             if (deadEntity is CombatEntity combatEntity)
             {
-                if (combatEntity.IsHero) HeroEntities.Remove(combatEntity.SeatNumber);
-                else EnemyEntities.Remove(combatEntity.SeatNumber);
+                if (combatEntity.IsHero)
+                    HeroEntities.Remove(combatEntity.SeatNumber);
+                else
+                    EnemyEntities.Remove(combatEntity.SeatNumber);
             }
+            
             Entity.Destroy(deadEntity);
         }
 
         public async void StartCombat()
         {
             RefreshRoundActions();
+            
             CombatEntity previousCreator = null;
             foreach (var item in RoundActions)
             {
@@ -97,6 +97,7 @@ namespace EGamePlay.Combat
                 await item.ApplyRound();
                 previousCreator = item.Creator;
             }
+            
             await TimeHelper.WaitAsync(1000);
             if (HeroEntities.Count == 0 || EnemyEntities.Count == 0)
             {
@@ -148,11 +149,5 @@ namespace EGamePlay.Combat
                 }
             }
         }
-        #endregion
-    }
-
-    public class CombatEndEvent
-    {
-
     }
 }

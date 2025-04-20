@@ -5,24 +5,27 @@ namespace EGamePlay
 {
     public class Component
     {
+        private bool _enable = false;
+        
         public Entity Entity { get; set; }
         public bool IsDisposed { get; set; }
         public Dictionary<long, Entity> Id2Children { get; private set; } = new Dictionary<long, Entity>();
+        
         public virtual bool DefaultEnable { get; set; } = true;
-        private bool enable = false;
+        
         public bool Enable
         {
+            get => _enable;
             set
             {
-                if (enable == value) return;
-                enable = value;
-                if (enable) OnEnable();
+                if (_enable == value)
+                    return;
+                
+                _enable = value;
+                if (_enable) OnEnable();
                 else OnDisable();
             }
-            get => enable;
         }
-        public bool Disable => enable == false;
-
 
         public T GetEntity<T>() where T : Entity
         {
@@ -31,47 +34,38 @@ namespace EGamePlay
 
         public virtual void Awake()
         {
-
         }
 
         public virtual void Awake(object initData)
         {
-
         }
 
         public virtual void Setup()
         {
-
         }
 
         public virtual void Setup(object initData)
         {
-
         }
 
         public virtual void OnEnable()
         {
-
         }
 
         public virtual void OnDisable()
         {
-
         }
 
         public virtual void Update()
         {
-
         }
 
         public virtual void FixedUpdate()
         {
-
         }
 
         public virtual void OnDestroy()
         {
-            
         }
 
         private void Dispose()
@@ -80,18 +74,18 @@ namespace EGamePlay
             IsDisposed = true;
         }
 
-        public static void Destroy(Component entity)
+        public static void Destroy(Component component)
         {
             try
             {
-                entity.OnDestroy();
+                component.OnDestroy();
             }
             catch (Exception e)
             {
                 Log.Error(e);
             }
             
-            entity.Dispose();
+            component.Dispose();
         }
 
         public T Publish<T>(T tEvent) where T : class
